@@ -1,4 +1,7 @@
-/resources
+#resources
+*.tif
+*.dpt
+*.png
 
 # C-style object files
 *.[oa]
