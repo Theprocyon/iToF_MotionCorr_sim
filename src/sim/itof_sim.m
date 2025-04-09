@@ -1,7 +1,7 @@
 run('itof_sim_param.m');
 
 %CalcParams
-f0 = ModulationFreq;
+f0 = SimParams.ModulationFreq;
 T0 = 1/f0;
 
 %Load Library
@@ -12,16 +12,17 @@ rgb_files = dir(fullfile(fileparts(mfilename('fullpath')), Directory.Res.RGB,'*.
 n = length(dpt_files);
 
 dpt_rawlist = cell(1, n);
-rgb_rawlist = cell(1, n);
+greyscale_rawlist = cell(1, n);
 
 
 parfor i = 1:length(dpt_files)
-    file_path = fullfile(dpt_files(i).folder, dpt_files(i).name);
+    dpt_file_path = fullfile(dpt_files(i).folder, dpt_files(i).name);
+    rgb_file_path = fullfile(rgb_files(i).folder, rgb_files(i).name);
 
-    disp(['Opened file: ', file_path]);
-    test = depth_read(file_path);
+    %disp(['Opened file: ', dpt_file_path]);
+    temp_depth = depth_read(dpt_file_path);
 
-    dpt_rawlist{i} = test;
+    dpt_rawlist{i} = temp_depth;
 end
 %disp(dpt_rawlist);
 
