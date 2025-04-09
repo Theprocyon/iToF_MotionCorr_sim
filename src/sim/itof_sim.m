@@ -49,9 +49,11 @@ end
 
 
 %Calc Corr Map
-corr_map_n = cell(1, n);
+corr_map_n  = cell(1, n);
+depth_est   = cell(1, n);
+inten_est   = cell(1, n);
 
-parfor i = 1:n
+for i = 1:n
     if ~proc_flags(i)
         continue;   %to Skip unwanted frames
     end
@@ -67,12 +69,14 @@ parfor i = 1:n
     cm = itof_corr(T,f0,es,ea,depth_map,N);
 
     corr_map_n{i} = cm;
+    
+    depth_est{i} = itof_depth_est_from_corr(corr_map_n{i},f0,N);
+    inten_est{i} = itof_inten_est_from_corr(corr_map_n{i},N);
 end
 
 % Calc depth_est, inten_est
 
-depth_est = itof_depth_est_from_corr(corr_map_n, f0);
-inten_est = itof_inten_est_from_corr(corr_map_n);
+
 
 whos depth_est;
 whos inten_est;
