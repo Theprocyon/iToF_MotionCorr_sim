@@ -71,9 +71,11 @@ end
 
 % Calc depth_est, inten_est
 
-depth_est = itof_depth_est_from_corr(corr_map_n);
+depth_est = itof_depth_est_from_corr(corr_map_n, f0);
 inten_est = itof_inten_est_from_corr(corr_map_n);
 
+whos depth_est;
+whos inten_est;
 
 %Simulation result : Correlation Show
 
@@ -123,7 +125,7 @@ if SimConfig.SingleFrameMode == 1
     figure;
     imagesc(est_depth_map);
     axis image off;
-    colormap('turbo');
+    colormap('gray');
     colorbar;
     title(sprintf('Estimated Depth (Frame %d)', i));
 
