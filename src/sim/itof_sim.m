@@ -1,4 +1,5 @@
 run('itof_sim_param.m');
+close all;
 
 %CalcParams
 f0          = SimParams.ModulationFreq;
@@ -81,40 +82,39 @@ end
 whos depth_est;
 whos inten_est;
 
-%Simulation result : Correlation Show
 
-if SimConfig.SingleFrameMode == 1  % Show Single Frame image and Corr map
+%Simulation result : Correlation Show
+if SimConfig.SingleFrameMode == 1
     i = SimConfig.SingleFrameModeTargetFrameIdx;
-    cm = corr_map_n{i};            % Correlation map (HxWxN)
+    cm = corr_map_n{i};
     rgb_img = imread(fullfile(rgb_files(i).folder, rgb_files(i).name));
     depth_map = dpt_rawlist{i};
     N = size(cm, 3);
 
+    % 1. RGB
     figure;
-
-    % 1. RGB 
-    subplot(3, N, 1);
     imshow(rgb_img);
-    title('RGB Image');
+    title(sprintf('RGB Image (Frame %d)', i));
 
-    % 2. Depth Map
-    subplot(3, N, N+1);
+    % 2. Raw Depth Map
+    figure;
     imagesc(depth_map);
     axis image off;
-    colormap('turbo');
+    colormap('gray');
     colorbar;
-    title('Raw Depth');
+    title(sprintf('Raw Depth Map (Frame %d)', i));
 
-    % 3. Correlation Map (n = 1~N)
+    % 3. Correlation Map
+    figure;
     for n_idx = 1:N
-        subplot(3, N, 2*N + n_idx);
+        subplot(1, N, n_idx);  % 한 줄에 나란히
         imshow(cm(:,:,n_idx), []);
         colormap('gray');
         title(sprintf('n = %d', n_idx));
     end
-
-    sgtitle(sprintf('Frame %d Summary View', i));
+    sgtitle(sprintf('Correlation Maps (Frame %d)', i));
 end
+
 
 %Simulation result : Estimmated Show
 
