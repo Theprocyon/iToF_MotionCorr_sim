@@ -10,6 +10,9 @@
 *~
 *.bak
 
+# Autosave
+*.asv
+
 # Python class files
 *.pyc
 
