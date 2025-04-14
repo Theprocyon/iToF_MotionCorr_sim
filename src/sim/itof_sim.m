@@ -1,4 +1,5 @@
 run('itof_sim_param.m');
+close all;
 
 %CalcParams
 f0          = SimParams.ModulationFreq;
@@ -49,9 +50,11 @@ end
 
 
 %Calc Corr Map
-corr_map_n = cell(1, n);
+corr_map_n  = cell(1, n);
+depth_est   = cell(1, n);
+inten_est   = cell(1, n);
 
-parfor i = 1:n
+for i = 1:n
     if ~proc_flags(i)
         continue;   %to Skip unwanted frames
     end
@@ -67,50 +70,51 @@ parfor i = 1:n
     cm = itof_corr(T,f0,es,ea,depth_map,N);
 
     corr_map_n{i} = cm;
+    
+    depth_est{i} = itof_depth_est_from_corr(corr_map_n{i},f0,N);
+    inten_est{i} = itof_inten_est_from_corr(corr_map_n{i},N);
 end
 
 % Calc depth_est, inten_est
 
-depth_est = itof_depth_est_from_corr(corr_map_n, f0);
-inten_est = itof_inten_est_from_corr(corr_map_n);
+
 
 whos depth_est;
 whos inten_est;
 
-%Simulation result : Correlation Show
 
-if SimConfig.SingleFrameMode == 1  % Show Single Frame image and Corr map
+%Simulation result : Correlation Show
+if SimConfig.SingleFrameMode == 1
     i = SimConfig.SingleFrameModeTargetFrameIdx;
-    cm = corr_map_n{i};            % Correlation map (HxWxN)
+    cm = corr_map_n{i};
     rgb_img = imread(fullfile(rgb_files(i).folder, rgb_files(i).name));
     depth_map = dpt_rawlist{i};
     N = size(cm, 3);
 
+    % 1. RGB
     figure;
-
-    % 1. RGB 
-    subplot(3, N, 1);
     imshow(rgb_img);
-    title('RGB Image');
+    title(sprintf('RGB Image (Frame %d)', i));
 
-    % 2. Depth Map
-    subplot(3, N, N+1);
+    % 2. Raw Depth Map
+    figure;
     imagesc(depth_map);
     axis image off;
-    colormap('turbo');
+    colormap('gray');
     colorbar;
-    title('Raw Depth');
+    title(sprintf('Raw Depth Map (Frame %d)', i));
 
-    % 3. Correlation Map (n = 1~N)
+    % 3. Correlation Map
+    figure;
     for n_idx = 1:N
-        subplot(3, N, 2*N + n_idx);
+        subplot(1, N, n_idx);  % 한 줄에 나란히
         imshow(cm(:,:,n_idx), []);
         colormap('gray');
         title(sprintf('n = %d', n_idx));
     end
-
-    sgtitle(sprintf('Frame %d Summary View', i));
+    sgtitle(sprintf('Correlation Maps (Frame %d)', i));
 end
+
 
 %Simulation result : Estimmated Show
 
