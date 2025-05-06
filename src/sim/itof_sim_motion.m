@@ -49,9 +49,9 @@ end
 corr_map_n  = cell(1, N);
 depth_est   = cell(1, N);
 inten_est   = cell(1, N);
+frameidx    = StartIdx;
 
 for i = 1:set_cnt
-    frameidx        = StartIdx;
     albedo_map      = cell(1, N);
     depth_map_c     = cell(1, N);  % cell 형태 유지
     alpha_map       = cell(1, N);
@@ -89,152 +89,141 @@ end
 % Calc depth_est, inten_est
 
 
+%Simulation result : Correlation Show
+i = 1;
+raw = StartIdx;
+cm = corr_map_n{i};
+int_img = imread(fullfile(rgb_files(raw).folder, rgb_files(raw).name));
+depth_map = dpt_rawlist{raw};
+N = size(cm, 3);
 
-%whos depth_est;
-%whos inten_est;
+%% 1. RGB
+%figure;
+%imshow(int_img);
+%title(sprintf('RGB Image (Frame %d)', raw));%
+
+%% 2. Raw Depth Map
+%figure;
+%imagesc(depth_map);
+%axis image off;
+%colormap('gray');
+%colorbar;
+%title(sprintf('Raw Depth Map (Frame %d)', raw));
+
+%cm = corr_map_n{i};
+%figure;
+%for n_idx = 1:N
+%    subplot(1, N, n_idx);
+%    imagesc(cm(:, :, n_idx));
+%    axis image off;
+%    colormap('gray');
+%    title(sprintf('n = %d', n_idx));
+%end
+%sgtitle(sprintf('Correlation Maps (Frame %d)', i));
 
 
 
+
+%%Simulation result : Estimmated Show
+%
+%est_depth_map = depth_est{i};     
+%est_inten_map = inten_est{i};     
+%real_depth_map = dpt_rawlist{raw};  
+%
+%% 1. Estimated Depth
+%figure;
+%imagesc(est_depth_map);
+%axis image off;
+%colormap('gray');
+%colorbar;
+%title(sprintf('Estimated Depth (Frame %d)', i));
+%
+%% 2. Estimated Intensity
+%figure;
+%imagesc(est_inten_map);
+%axis image off;
+%colormap('gray');
+%colorbar;
+%title(sprintf('Estimated Intensity (Frame %d)', i));
+%
+%% 3. Difference from GT Depth
+%figure;
+%diff_map = abs(est_depth_map - real_depth_map);
+%imagesc(diff_map);
+%axis image off;
+%colormap('hot');
+%colorbar;
+%title(sprintf('Depth Error (|Est - GT|) Frame %d', i));
+
+
+
+
+%MotionCorr
 flowModel = opticalFlowRAFT;
 
-reset(flowModel);
+int_img = inten_est{1};
+int_img = (int_img - min(int_img(:))) / (max(int_img(:)) - min(int_img(:)));
+int_img = min(max(int_img, 0), 1);
 
-%for i = 1:n
-%
-%    rgb_img = imread(fullfile(rgb_files(i).folder, rgb_files(i).name));
-%    img = im2single(rgb_img);            
-%    flow = estimateFlow(flowModel, img);
-%    
-%    if (i > 5 && i < 10)
-%    imshow(img);
-%    hold on;
-%    plot(flow, DecimationFactor=[10 10], ScaleFactor=0.45);
-%    hold off;
-%    end
-%
-%end
+dummy = estimateFlow(flowModel, int_img);
 
+compensated = cell(1, length(inten_est) - 1);
 
-% 첫 프레임 준비
-rgb_img_prev = im2single(imread(fullfile(rgb_files(1).folder, rgb_files(1).name)));
-dummy = estimateFlow(flowModel, rgb_img_prev);
+for i = 2:length(inten_est)
+    int_img = inten_est{i};
+    int_img = (int_img - min(int_img(:))) / (max(int_img(:)) - min(int_img(:)));
+    int_img = min(max(int_img, 0), 1);
 
-for i = 2:n
-    rgb_img = im2single(imread(fullfile(rgb_files(i).folder, rgb_files(i).name)));
-    
-    flow = estimateFlow(flowModel, rgb_img);
+    flow = estimateFlow(flowModel, int_img);
 
-    [H, W, ~] = size(rgb_img);
+    if i == 2
+        asdf = int_img;
+        figure;
+        imagesc(asdf); 
+        axis image off;
+        colormap('gray'); colorbar;
+        hold on;
+        plot(flow, 'DecimationFactor', [10 10], 'ScaleFactor', 1.0);
+        title('Optical Flow on inten (Frame 2)');
+        hold off;
+    end
+
+    [H, W] = size(int_img);
     [X, Y] = meshgrid(1:W, 1:H);
 
     Xq = X + flow.Vx;
     Yq = Y + flow.Vy;
 
-    compensated = zeros(size(rgb_img), 'like', rgb_img);
-    for c = 1:3
-        compensated(:,:,c) = interp2(X, Y, rgb_img(:,:,c), Xq, Yq, 'linear', 0);
-    end
-
-    error_map = abs(compensated - rgb_img_prev);
-    error_gray = mean(error_map, 3); 
-
-    figure('Name', sprintf('Frame %d - Prev', i));
-    imshow(rgb_img_prev);
-    title(sprintf('Previous Frame (%d)', i-1));
-
-    figure('Name', sprintf('Frame %d - Current', i));
-    imshow(rgb_img);
-    title(sprintf('Current Frame (%d)', i));
-
-    figure('Name', sprintf('Frame %d - Motion Compensated', i));
-    imshow(compensated);
-    title(sprintf('Motion Compensated Frame (%d)', i));
-
-    figure('Name', sprintf('Frame %d - Error Map', i));
-    imagesc(error_gray);
-    axis image off;
-    colormap('hot');
-    colorbar;
-    title(sprintf('Error |Compensated - Prev| (Frame %d)', i));
-
-    figure('Name', sprintf('Frame %d - Flow (on Current)', i));
-    imshow(rgb_img); hold on;
-    plot(flow, 'DecimationFactor', [10 10], 'ScaleFactor', 0.45);
-    title(sprintf('Optical Flow (Frame %d)', i));
-    hold off;
-
-    rgb_img_prev = rgb_img;
+    compensated{i - 1} = interp2(X, Y, inten_est{i}, Xq, Yq, 'linear', 0);
 
     break;
 end
 
+Set1_inten = inten_est{1};        
+Set2_inten = inten_est{2};        
+comp_inten = compensated{1};      
+% 1. 기준 프레임
+figure;
+imagesc(Set1_inten);
+axis image off; colormap('gray'); colorbar;
+title('Prev (Frame 1)');
+
+% 2. 보정 전 현재 프레임
+figure;
+imagesc(Set2_inten);
+axis image off; colormap('gray'); colorbar;
+title('Current (Frame 2) Before Warp');
+
+% 3. 보정된 프레임
+figure;
+imagesc(comp_inten);
+axis image off; colormap('gray'); colorbar;
+title('Warped (Frame 2 → Frame 1)');
+
+% 4. 에러맵 시각화
+figure;
+imagesc(abs(comp_inten - Set1_inten));
+axis image off; colormap('hot'); colorbar;
+title('|Warped - Prev| Error Map');
+
 reset(flowModel);
-
-
-
-%Simulation result : Correlation Show
-i = 1;
-raw = StartIdx;
-cm = corr_map_n{i};
-rgb_img = imread(fullfile(rgb_files(raw).folder, rgb_files(raw).name));
-depth_map = dpt_rawlist{raw};
-N = size(cm, 3);
-
-% 1. RGB
-figure;
-imshow(rgb_img);
-title(sprintf('RGB Image (Frame %d)', raw));
-
-% 2. Raw Depth Map
-figure;
-imagesc(depth_map);
-axis image off;
-colormap('gray');
-colorbar;
-title(sprintf('Raw Depth Map (Frame %d)', raw));
-
-cm = corr_map_n{i};
-figure;
-for n_idx = 1:N
-    subplot(1, N, n_idx);
-    imagesc(cm(:, :, n_idx));  % <-- 수정된 부분
-    axis image off;
-    colormap('gray');
-    title(sprintf('n = %d', n_idx));
-end
-sgtitle(sprintf('Correlation Maps (Frame %d)', i));
-
-
-
-
-%Simulation result : Estimmated Show
-
-est_depth_map = depth_est{i};     
-est_inten_map = inten_est{i};     
-real_depth_map = dpt_rawlist{raw};  
-
-% 1. Estimated Depth
-figure;
-imagesc(est_depth_map);
-axis image off;
-colormap('gray');
-colorbar;
-title(sprintf('Estimated Depth (Frame %d)', i));
-
-% 2. Estimated Intensity
-figure;
-imagesc(est_inten_map);
-axis image off;
-colormap('gray');
-colorbar;
-title(sprintf('Estimated Intensity (Frame %d)', i));
-
-% 3. Difference from GT Depth
-figure;
-diff_map = abs(est_depth_map - real_depth_map);
-imagesc(diff_map);
-axis image off;
-colormap('hot');
-colorbar;
-title(sprintf('Depth Error (|Est - GT|) Frame %d', i));
-
