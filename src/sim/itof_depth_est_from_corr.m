@@ -15,7 +15,7 @@ function depth_est = itof_depth_est_from_corr(corr_map, f0, N)
         end
     
         phi = atan2(Csp, Ccp);
-        phi(phi < 0) = phi(phi < 0) + 2*pi;
+        phi = mod(phi, 2*pi)
     
         depth_est = (c / (4 * pi * f0)) * phi;
     end

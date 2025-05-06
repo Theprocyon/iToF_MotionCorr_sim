@@ -2,8 +2,7 @@ Directory.Library = '../../lib/TAU/';
 Directory.Res.Depth = '../../resources/City_L/Depth/';
 Directory.Res.RGB = '../../resources/City_L/Images/';
 
-SimConfig.SingleFrameMode = 1;
-SimConfig.SingleFrameModeTargetFrameIdx = 100;
+SimConfig.CaptureStartIdx = 100;
 
 SimParams.ModulationFreq    = 10e6; %10MHz 15m, / d = c/2f
 SimParams.IntegrationTime   = 2e-3;
