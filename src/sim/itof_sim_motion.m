@@ -96,22 +96,79 @@ end
 
 
 flowModel = opticalFlowRAFT;
+
+reset(flowModel);
+
+%for i = 1:n
 %
-%% 이미지 프레임 시퀀스가 있다고 치자 (예: cell array of RGB images)
-%imgSeq = {set1, set2};  
-%
-%for i = 1:length(imgSeq)
-%    flow = estimateFlow(flowModel, imgSeq{i});
+%    rgb_img = imread(fullfile(rgb_files(i).folder, rgb_files(i).name));
+%    img = im2single(rgb_img);            
+%    flow = estimateFlow(flowModel, img);
 %    
-%    % 흐름 시각화
-%    imshow(imgSeq{i});
+%    if (i > 5 && i < 10)
+%    imshow(img);
 %    hold on;
 %    plot(flow, DecimationFactor=[10 10], ScaleFactor=0.45);
 %    hold off;
-%    pause(0.01);
-%end
+%    end
 %
-%reset(flowModel);  % 다 끝나고 나면 리셋해주면 돼!
+%end
+
+
+% 첫 프레임 준비
+rgb_img_prev = im2single(imread(fullfile(rgb_files(1).folder, rgb_files(1).name)));
+dummy = estimateFlow(flowModel, rgb_img_prev);
+
+for i = 2:n
+    rgb_img = im2single(imread(fullfile(rgb_files(i).folder, rgb_files(i).name)));
+    
+    flow = estimateFlow(flowModel, rgb_img);
+
+    [H, W, ~] = size(rgb_img);
+    [X, Y] = meshgrid(1:W, 1:H);
+
+    Xq = X + flow.Vx;
+    Yq = Y + flow.Vy;
+
+    compensated = zeros(size(rgb_img), 'like', rgb_img);
+    for c = 1:3
+        compensated(:,:,c) = interp2(X, Y, rgb_img(:,:,c), Xq, Yq, 'linear', 0);
+    end
+
+    error_map = abs(compensated - rgb_img_prev);
+    error_gray = mean(error_map, 3); 
+
+    figure('Name', sprintf('Frame %d - Prev', i));
+    imshow(rgb_img_prev);
+    title(sprintf('Previous Frame (%d)', i-1));
+
+    figure('Name', sprintf('Frame %d - Current', i));
+    imshow(rgb_img);
+    title(sprintf('Current Frame (%d)', i));
+
+    figure('Name', sprintf('Frame %d - Motion Compensated', i));
+    imshow(compensated);
+    title(sprintf('Motion Compensated Frame (%d)', i));
+
+    figure('Name', sprintf('Frame %d - Error Map', i));
+    imagesc(error_gray);
+    axis image off;
+    colormap('hot');
+    colorbar;
+    title(sprintf('Error |Compensated - Prev| (Frame %d)', i));
+
+    figure('Name', sprintf('Frame %d - Flow (on Current)', i));
+    imshow(rgb_img); hold on;
+    plot(flow, 'DecimationFactor', [10 10], 'ScaleFactor', 0.45);
+    title(sprintf('Optical Flow (Frame %d)', i));
+    hold off;
+
+    rgb_img_prev = rgb_img;
+
+    break;
+end
+
+reset(flowModel);
 
 
 
