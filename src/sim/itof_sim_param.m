@@ -5,7 +5,7 @@ Directory.Res.RGB = '../../resources/City_L/Images/';
 SimConfig.SingleFrameMode = 1;
 SimConfig.SingleFrameModeTargetFrameIdx = 100;
 
-SimParams.ModulationFreq    = 20e6; %1MHz
+SimParams.ModulationFreq    = 10e6; %10MHz
 SimParams.IntegrationTime   = 2e-3;
 SimParams.SensorBeta        = 1.0; %Sensor Dependent  Scale factor, Considering Gain / Sensitivity
 SimParams.AlphaScale        = 1.0; %scale factor encapsulating light fall-off, scene albedo, and reflectance properties

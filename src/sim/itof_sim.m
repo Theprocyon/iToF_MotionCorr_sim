@@ -67,6 +67,8 @@ for i = 1:n
     es = alpha_map * AlphaScale * Beta * Ps;
     ea = ones(size(alpha_map)) * (Beta * Pa);
 
+    es = ones(size(alpha_map));
+
     cm = itof_corr(T,f0,es,ea,depth_map,N);
 
     corr_map_n{i} = cm;
@@ -131,6 +133,7 @@ if SimConfig.SingleFrameMode == 1
     axis image off;
     colormap('gray');
     colorbar;
+    caxis([0 10]);
     title(sprintf('Estimated Depth (Frame %d)', i));
 
     % 2. Estimated Intensity
@@ -148,5 +151,6 @@ if SimConfig.SingleFrameMode == 1
     axis image off;
     colormap('hot');
     colorbar;
+    caxis([0 10]);
     title(sprintf('Depth Error (|Est - GT|) Frame %d', i));
 end
