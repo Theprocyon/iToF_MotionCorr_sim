@@ -110,16 +110,16 @@ N = size(cm, 3);
 %colorbar;
 %title(sprintf('Raw Depth Map (Frame %d)', raw));
 
-%cm = corr_map_n{i};
-%figure;
-%for n_idx = 1:N
-%    subplot(1, N, n_idx);
-%    imagesc(cm(:, :, n_idx));
-%    axis image off;
-%    colormap('gray');
-%    title(sprintf('n = %d', n_idx));
-%end
-%sgtitle(sprintf('Correlation Maps (Frame %d)', i));
+cm = corr_map_n{1};
+figure;
+for n_idx = 1:N
+    subplot(2, 2, n_idx); 
+    imagesc(cm(:, :, n_idx));
+    axis image off;
+    colormap('gray');
+    title(sprintf('n = %d', n_idx));
+end
+sgtitle(sprintf('Correlation Maps (Frame %d)', i));
 
 
 
